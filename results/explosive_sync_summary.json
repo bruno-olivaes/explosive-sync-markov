@@ -1,0 +1,28 @@
+{
+  "network": {
+    "num_modules": 3,
+    "nodes_per_module": 30,
+    "total_nodes": 90,
+    "blanket_fraction": 0.25,
+    "total_blanket_nodes": 21
+  },
+  "markov_blanket_gated": {
+    "order_parameter_jump_delta_R": 0.14364244719614372,
+    "forward_critical_coupling_Kc_fwd": 2.1,
+    "backward_critical_coupling_Kc_bwd": 0.9000000000000001,
+    "hysteresis_width_delta_K": 1.2,
+    "hysteresis_area": 0.06760987072439303,
+    "bic_1st_order": -269.16324591133275,
+    "bic_2nd_order": -256.9925240731608,
+    "delta_bic_evidence_for_1st_order": 12.170721838171971,
+    "classification": "Continuous Transition"
+  },
+  "standard_modular_reference": {
+    "max_step_delta_R": 0.08842270947529896,
+    "hysteresis_area": 0.11355788402955383,
+    "bic_1st_order": -289.59625682831097,
+    "bic_2nd_order": -265.47026121613357,
+    "delta_bic_evidence_for_1st_order": 24.125995612177405,
+    "classification": "Second-Order Continuous Pitchfork Transition"
+  }
+}
