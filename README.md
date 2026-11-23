@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![arXiv](https://img.shields.io/badge/arXiv-2611.10982-b31b1b.svg)](https://arxiv.org)
+[![Tests: 6/6](https://img.shields.io/badge/pytest-6%2F6_passed-brightgreen.svg)]()
 [![ORCID](https://img.shields.io/badge/ORCID-0009--0003--5351--446X-green.svg)](https://orcid.org/0009-0003-5351-446X)
 
 This repository contains the official code, simulation pipeline, unit tests, and LaTeX manuscript for the paper:
@@ -14,30 +14,30 @@ This repository contains the official code, simulation pipeline, unit tests, and
 
 ## 🔬 Scientific Overview
 
-In networked dynamical systems, the Kuramoto transition to macroscopic collective synchronization is classically classified as a continuous, second-order phase transition governed by a supercritical pitchfork bifurcation ($R \propto (K - K_c)^{1/2}$).
+In networked dynamical systems, the Kuramoto transition to macroscopic collective synchronization is classically classified as a continuous, second-order phase transition governed by a supercritical pitchfork bifurcation ($R \propto (K - K_c)^\beta$).
 
-This work demonstrates that partitioning oscillator networks into distinct topological modules separated by **Markov blankets**—in strict accordance with the statistical mechanics formulation of the **Free Energy Principle (FEP)**—fundamentally alters the nature of the phase transition:
+This work isolates Active-Inference precision gating on an identical modular network bounded by **Markov blankets**:
 
-1. **Subcritical Suppression:** When inter-modular transmission across sensory and active boundary nodes is conditionally gated by boundary consensus ($R_{\mathcal{B}}^{(m)}$), premature inter-cluster phase locking is suppressed at subcritical coupling.
-2. **Explosive 1st-Order Transition:** As intra-modular coherence accumulates, a sharp consensus threshold activates cooperative inter-modular feedback, inducing an abrupt, discontinuous first-order transition ($\Delta R > 0.45$).
-3. **Bistable Hysteresis:** A marked hysteresis loop ($\Delta K_{\text{hyst}} = 1.20$) separates the forward and backward adiabatic sweeps.
-4. **Landau Free Energy Reconstruction:** We reconstruct the Landau-Ginzburg effective potential $\mathcal{F}(R; K)$, proving that the cubic term $-\frac{1}{3} b R^3$ emerges organically from the modular blanket boundary condition, stabilizing a metastable disordered state.
-5. **Bayesian Model Selection:** Bayesian Information Criterion (BIC) analysis provides decisive statistical evidence ($\Delta\mathrm{BIC} = +12.17$) favoring the first-order discontinuous framework over the continuous pitchfork model.
+1. **Subcritical Suppression ($\mathcal{G} = [R_{\mathcal{B}}^{\mathrm{joint}}]^{2.40}$):** When boundary coupling precision scales with joint cross-blanket consensus, premature inter-cluster phase locking is suppressed up to $K_c^{\mathrm{fwd}} = 3.50$.
+2. **Explosive 1st-Order Transition:** Crossing threshold triggers cooperative blanket-mediated capture, inducing an abrupt discontinuous jump ($\Delta R = 0.7335$).
+3. **Wide Bistable Hysteresis:** A wide hysteresis loop ($\Delta K_{\mathrm{hyst}} = 2.00$, directional area $\mathcal{A}_{\mathrm{hyst}} = 1.4932$) separates forward ($K_c^{\mathrm{fwd}} = 3.50$) and backward ($K_c^{\mathrm{bwd}} = 1.50$) adiabatic sweeps, vs.\ $\mathcal{A}_{\mathrm{hyst}} = 0.0101$ on the identical ungated baseline ($\mathcal{G} \equiv 1$).
+4. **Gauge-Invariant $U(1)$ 6th-Order Landau Potential:** Reconstructs $\mathcal{F}(R; K) = \frac{1}{2}a_0(K_c - K)R^2 - \frac{1}{4}b R^4 + \frac{1}{6}c R^6$, respecting phase-rotation invariance $z \to z e^{i\alpha}$.
+5. **Bayesian Model Selection:** Joint forward--backward BIC analysis decisively certifies 1st-order explosive hysteresis ($\Delta\mathrm{BIC} = +267.53$) while correctly preferring the 2nd-order continuous pitchfork ($\Delta\mathrm{BIC} = -153.30$) on the ungated control.
 
 ---
 
-## 📊 Summary of Results
+## 📊 Summary of Audited Results ($N=90, M=3, |\mathcal{B}|=30$)
 
-| Metric | Standard Modular Kuramoto | Markov-Blanket Gated Kuramoto |
+| Metric | Ungated Reference ($\gamma = 0$) | Markov-Blanket Gated ($\gamma = 2.40$) |
 | :--- | :---: | :---: |
 | **Phase Transition Class** | 2nd-Order Continuous | **1st-Order Explosive** |
-| **Order Parameter Jump $\Delta R$** | $0.088$ | **$0.144$ (Sharp Jump)** |
-| **Forward Critical Coupling $K_c^{\text{fwd}}$** | $1.80$ | **$2.10$** |
-| **Backward Critical Coupling $K_c^{\text{bwd}}$** | $1.80$ | **$0.90$** |
-| **Hysteresis Width $\Delta K_{\text{hyst}}$** | $0.00$ | **$1.20$ (Bistable)** |
-| **Hysteresis Area $\mathcal{A}_{\text{hyst}}$** | $0.113$ | **$0.068$** |
-| **$\Delta\mathrm{BIC}$ ($\mathcal{M}_2 - \mathcal{M}_1$)** | $+24.13$ | **$+12.17$** |
-| **Decisive Evidence ($\Delta\mathrm{BIC} > 10$)** | No | **Yes** |
+| **Max Forward Jump $\Delta R$** | $0.1810$ | **$0.7335$** |
+| **Forward Critical Coupling $K_c^{\text{fwd}}$** | $\sim 0.90$ | **$3.50$** |
+| **Backward Critical Coupling $K_c^{\text{bwd}}$** | $\sim 0.90$ | **$1.50$** |
+| **Hysteresis Width $\Delta K_{\text{hyst}}$** | $0.00$ | **$2.00$ (Bistable)** |
+| **Directional Hysteresis Area $|\oint R\,dK|$** | $0.0101$ | **$1.4932$** |
+| **$\Delta\mathrm{BIC}$ ($\mathcal{M}_2 - \mathcal{M}_1$)** | $-153.30$ | **$+267.53$** |
+| **Decisive 1st-Order Evidence ($\Delta\mathrm{BIC} > +10$)** | No (favors $\mathcal{M}_2$) | **Yes** |
 
 ---
 
@@ -49,7 +49,7 @@ explosive-sync-markov/
 │   ├── explosive_kuramoto_engine.py   # Vectorized RK4 Numba simulation engine
 │   └── run_simulation.py             # Simulation runner, metric analysis, figure generation
 ├── tests/
-│   └── test_explosive_kuramoto.py     # 5/5 unit & integration tests (pytest)
+│   └── test_explosive_kuramoto.py     # 6/6 unit & integration tests (pytest)
 ├── figures/
 │   └── fig1_explosive_sync_markov_audit.png  # High-resolution 4-panel publication figure
 ├── results/

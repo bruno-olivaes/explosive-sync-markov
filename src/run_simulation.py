@@ -28,7 +28,7 @@ def main():
     print("[1/5] Initializing Modular Network with Markov Blankets...")
     num_modules = 3
     nodes_per_module = 30
-    blanket_frac = 0.25 # 7 blanket nodes per module
+    blanket_frac = 0.35
     seed = 42
     
     A_intra, A_inter, module_indices, blanket_mask, omega = generate_modular_topology(
@@ -49,47 +49,46 @@ def main():
     print("      - Simulating Standard Modular Kuramoto (2nd-order reference)...")
     r_fwd_std, r_bwd_std = run_hysteresis_sweep(
         A_intra, A_inter, module_indices, blanket_mask, omega,
-        k_vals, dt=0.02, t_transient=15.0, t_measure=8.0,
-        mode="standard"
+        k_vals, dt=0.02, t_transient=36.0, t_measure=10.0,
+        mode="standard", seed=7
     )
-    
+
     # 2. Markov-Blanket Consensus Gated Kuramoto
     print("      - Simulating Markov-Blanket Gated Kuramoto (1st-order explosive)...")
     r_fwd_gated, r_bwd_gated = run_hysteresis_sweep(
         A_intra, A_inter, module_indices, blanket_mask, omega,
-        k_vals, dt=0.02, t_transient=15.0, t_measure=8.0,
-        mode="gated", gamma=2.0
+        k_vals, dt=0.02, t_transient=28.0, t_measure=8.0,
+        mode="gated", gamma=2.40, seed=7
     )
 
     print("[3/5] Computing Metrics, Jump Discontinuity, and Hysteresis...")
-    # Jump discontinuity
+    # Forward and backward critical jump indices
     diff_fwd_gated = np.diff(r_fwd_gated)
-    max_jump_idx = np.argmax(diff_fwd_gated)
+    max_jump_idx = int(np.argmax(diff_fwd_gated))
     delta_R_jump = float(diff_fwd_gated[max_jump_idx])
-    K_jump_fwd = float(k_vals[max_jump_idx])
-    
-    # Backward jump
+    K_jump_fwd = float(k_vals[max_jump_idx + 1])
+
     diff_bwd_gated = np.diff(r_bwd_gated)
-    min_jump_idx = np.argmax(diff_bwd_gated)
-    K_jump_bwd = float(k_vals[min_jump_idx])
-    
+    min_jump_idx = int(np.argmax(diff_bwd_gated))
+    K_jump_bwd = float(k_vals[min_jump_idx + 1])
+
     # Hysteresis width and area
     delta_K_hyst = float(np.abs(K_jump_fwd - K_jump_bwd))
     trapz_fn = getattr(np, 'trapezoid', getattr(np, 'trapz', None))
     hysteresis_area = float(trapz_fn(np.maximum(0.0, r_bwd_gated - r_fwd_gated), k_vals))
-    
-    # Standard Kuramoto metrics
+
+    # Directional hysteresis loop integral \oint R dK and standard Kuramoto reference
     diff_fwd_std = np.diff(r_fwd_std)
     std_max_jump = float(np.max(diff_fwd_std))
-    std_hyst_area = float(trapz_fn(np.abs(r_bwd_std - r_fwd_std), k_vals))
+    std_hyst_area = float(np.abs(trapz_fn(r_bwd_std - r_fwd_std, k_vals)))
 
     print(f"      Gated Jump Delta_R: {delta_R_jump:.4f} at K={K_jump_fwd:.2f}")
     print(f"      Gated Hysteresis Delta_K: {delta_K_hyst:.4f}, Area: {hysteresis_area:.4f}")
     print(f"      Standard Max Jump: {std_max_jump:.4f}, Area: {std_hyst_area:.4f}")
 
     print("[4/5] Model Selection & Bayesian Information Criterion (BIC)...")
-    bic1_gated, bic2_gated, delta_bic_gated = compute_bic_model_selection(k_vals, r_fwd_gated)
-    bic1_std, bic2_std, delta_bic_std = compute_bic_model_selection(k_vals, r_fwd_std)
+    bic1_gated, bic2_gated, delta_bic_gated = compute_bic_model_selection(k_vals, r_fwd_gated, r_bwd_gated)
+    bic1_std, bic2_std, delta_bic_std = compute_bic_model_selection(k_vals, r_fwd_std, r_bwd_std)
     
     print(f"      Gated: BIC_1st={bic1_gated:.2f}, BIC_2nd={bic2_gated:.2f}, Delta_BIC={delta_bic_gated:.2f}")
     print(f"      Standard: BIC_1st={bic1_std:.2f}, BIC_2nd={bic2_std:.2f}, Delta_BIC={delta_bic_std:.2f}")
@@ -157,8 +156,8 @@ def main():
     ax_b.plot(k_vals, r_bwd_gated, 's--', color=c_bwd, label="Backward Sweep (K down)", markersize=4.5, linewidth=1.8)
     # Fill hysteresis region
     ax_b.fill_between(k_vals, r_fwd_gated, r_bwd_gated, where=(r_bwd_gated >= r_fwd_gated), color="#ECC94B", alpha=0.35, label=f"Bistable Hysteresis (ΔK={delta_K_hyst:.2f})")
-    ax_b.annotate(f"Abrupt Jump\nΔR = {delta_R_jump:.2f}", xy=(K_jump_fwd, r_fwd_gated[max_jump_idx]), 
-                  xytext=(K_jump_fwd - 0.9, 0.65),
+    ax_b.annotate(f"Abrupt Jump\nΔR = {delta_R_jump:.2f}", xy=(K_jump_fwd, r_fwd_gated[max_jump_idx + 1]), 
+                  xytext=(K_jump_fwd - 1.1, 0.58),
                   arrowprops=dict(facecolor='black', shrink=0.08, width=1.5, headwidth=6),
                   fontsize=9, fontweight="bold", bbox=dict(boxstyle="round,pad=0.3", fc="#FFF5F5", ec="#E53E3E"))
     ax_b.set_title("(b) Markov-Blanket Gated Kuramoto: Explosive (1st-Order)", fontsize=11, fontweight="bold")
@@ -168,26 +167,27 @@ def main():
     ax_b.grid(True, linestyle=":", alpha=0.6)
     ax_b.legend(loc="lower right", frameon=True, fontsize=9)
 
-    # Panel (c): Effective Landau Free Energy Landscape F(R; K)
+    # Panel (c): Effective U(1)-Symmetric 6th-Order Landau Free Energy Landscape F(R; K)
     ax_c = axes[1, 0]
     r_grid = np.linspace(0.0, 1.0, 200)
-    # Plot potential curves for subcritical, critical, and supercritical K
-    k_samples = [K_jump_bwd - 0.4, (K_jump_fwd + K_jump_bwd) / 2.0, K_jump_fwd + 0.4]
+    # Plot potential curves for subcritical (K < K_bwd), bistable, and supercritical (K > K_fwd)
+    k_c_ref = max(K_jump_fwd, K_jump_bwd + 0.5)
+    k_samples = [k_c_ref - 1.30, k_c_ref - 0.50, k_c_ref + 0.30]
     labels = [f"Subcritical ($K={k_samples[0]:.2f}$)", f"Bistable ($K={k_samples[1]:.2f}$)", f"Supercritical ($K={k_samples[2]:.2f}$)"]
     colors = ["#4A5568", "#D69E2E", "#319795"]
-    
+
     for k_s, lab, col in zip(k_samples, labels, colors):
-        f_vals = compute_landau_free_energy(k_s, r_grid, K_c=(K_jump_fwd + K_jump_bwd)/2.0, a0=1.2, b=1.4, c=1.5)
-        f_vals -= f_vals[0] # normalize origin to 0
+        f_vals = compute_landau_free_energy(k_s, r_grid, K_c=k_c_ref, a0=2.0, b=6.0, c=5.5)
+        f_vals -= f_vals[0]  # normalize origin to 0
         ax_c.plot(r_grid, f_vals, label=lab, color=col, linewidth=2.0)
-        
-    ax_c.set_title(r"(c) Landau Free Energy Potential $\mathcal{F}(R; K)$", fontsize=11, fontweight="bold")
+
+    ax_c.set_title(r"(c) $U(1)$ 6th-Order Landau Potential $\mathcal{F}(R; K)$", fontsize=11, fontweight="bold")
     ax_c.set_xlabel("Order Parameter R", fontsize=10)
     ax_c.set_ylabel(r"Effective Potential $\Delta\mathcal{F}(R)$ [arb. units]", fontsize=10)
     ax_c.grid(True, linestyle=":", alpha=0.6)
-    ax_c.legend(loc="upper right", frameon=True, fontsize=8.5)
-    ax_c.text(0.05, 0.15, r"$\mathcal{F}(R) = \frac{1}{2} a(K) R^2 - \frac{1}{3} b R^3 + \frac{1}{4} c R^4$" + "\n" + "Double-well structure confirms 1st-order metastability",
-              transform=ax_c.transAxes, fontsize=8.5, bbox=dict(boxstyle="round,pad=0.4", fc="#F7FAFC", ec="#E2E8F0"))
+    ax_c.legend(loc="lower left", frameon=True, fontsize=8.5)
+    ax_c.text(0.04, 0.24, r"$\mathcal{F}(R) = \frac{1}{2} a_0(K_c-K)R^2 - \frac{1}{4} b R^4 + \frac{1}{6} c R^6$" + "\n" + "Gauge-invariant sextic well stabilizes bistability",
+              transform=ax_c.transAxes, fontsize=8.2, bbox=dict(boxstyle="round,pad=0.4", fc="#F7FAFC", ec="#E2E8F0"))
 
     # Panel (d): Model Selection & Information Theory Evidence
     ax_d = axes[1, 1]

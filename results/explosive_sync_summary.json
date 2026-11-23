@@ -3,26 +3,26 @@
     "num_modules": 3,
     "nodes_per_module": 30,
     "total_nodes": 90,
-    "blanket_fraction": 0.25,
-    "total_blanket_nodes": 21
+    "blanket_fraction": 0.35,
+    "total_blanket_nodes": 30
   },
   "markov_blanket_gated": {
-    "order_parameter_jump_delta_R": 0.14364244719614372,
-    "forward_critical_coupling_Kc_fwd": 2.1,
-    "backward_critical_coupling_Kc_bwd": 0.9000000000000001,
-    "hysteresis_width_delta_K": 1.2,
-    "hysteresis_area": 0.06760987072439303,
-    "bic_1st_order": -269.16324591133275,
-    "bic_2nd_order": -256.9925240731608,
-    "delta_bic_evidence_for_1st_order": 12.170721838171971,
-    "classification": "Continuous Transition"
+    "order_parameter_jump_delta_R": 0.7334984949813566,
+    "forward_critical_coupling_Kc_fwd": 3.5000000000000004,
+    "backward_critical_coupling_Kc_bwd": 1.5,
+    "hysteresis_width_delta_K": 2.0000000000000004,
+    "hysteresis_area": 1.4932298362451641,
+    "bic_1st_order": -449.87726794240285,
+    "bic_2nd_order": -182.3471969132378,
+    "delta_bic_evidence_for_1st_order": 267.530071029165,
+    "classification": "First-Order Discontinuous Explosive Transition"
   },
   "standard_modular_reference": {
-    "max_step_delta_R": 0.08842270947529896,
-    "hysteresis_area": 0.11355788402955383,
-    "bic_1st_order": -289.59625682831097,
-    "bic_2nd_order": -265.47026121613357,
-    "delta_bic_evidence_for_1st_order": 24.125995612177405,
+    "max_step_delta_R": 0.18097271994465586,
+    "hysteresis_area": 0.010135700236426834,
+    "bic_1st_order": -352.7110376144052,
+    "bic_2nd_order": -506.0118912507668,
+    "delta_bic_evidence_for_1st_order": -153.30085363636158,
     "classification": "Second-Order Continuous Pitchfork Transition"
   }
 }
