@@ -94,27 +94,41 @@ def test_rk4_step_stability():
 
 
 def test_landau_free_energy_profile():
-    """Verify U(1) 6th-order Landau free energy potential generates bistability."""
-    r_grid = np.linspace(0.0, 1.0, 100)
-    # At critical coupling K_c = 2.0, double well develops at high R > 0.5
-    F = compute_landau_free_energy(k_val=2.0, r_grid=r_grid, K_c=2.0, a0=2.0, b=6.0, c=5.5)
-    assert len(F) == 100
+    """Verify calibrated U(1) 6th-order Landau free energy potential matches spinodal width and R <= 1."""
+    a0, b, c, kc = 1.00, 9.00, 10.125, 3.50
+    delta_k_spinodal = (b ** 2) / (4.0 * c * a0)
+    r_sync_kc = np.sqrt(b / c)
+    assert np.isclose(delta_k_spinodal, 2.0, atol=1e-9)
+    assert 0.90 < r_sync_kc <= 1.0
+
+    r_grid = np.linspace(0.0, 1.0, 400)
+    # At K = 3.00 inside the bistable window [1.50, 3.50], double well develops at high R ~ 0.90
+    F = compute_landau_free_energy(k_val=3.0, r_grid=r_grid, K_c=kc, a0=a0, b=b, c=c)
+    assert len(F) == 400
     assert np.isclose(F[0], 0.0)
-    min_idx = np.argmin(F[50:]) + 50
-    assert r_grid[min_idx] > 0.5
+    min_idx = np.argmin(F[100:]) + 100
+    assert 0.80 < r_grid[min_idx] < 1.0
 
 
 def test_end_to_end_explosive_hysteresis_and_bic():
-    """Verify explosive 1st-order transition, hysteresis, and BIC separation in saved audit."""
+    """Verify explosive 1st-order transition, hysteresis, coexistence, scaling, and BIC in saved audit."""
     import json
     summary_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results", "explosive_sync_summary.json"))
     with open(summary_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     mg = data["markov_blanket_gated"]
     st = data["standard_modular_reference"]
+    co = data["fixed_k_coexistence"]
+    sc = data["ensemble_and_size_scaling"]
     assert mg["order_parameter_jump_delta_R"] > 0.45
     assert mg["hysteresis_width_delta_K"] >= 0.80
     assert mg["hysteresis_area"] > 0.40
     assert mg["delta_bic_evidence_for_1st_order"] > 40.0
     assert st["hysteresis_area"] < 0.06
     assert st["delta_bic_evidence_for_1st_order"] < 0.0
+    assert co["coexistence_confirmed"] is True
+    assert co["bistable_separation"] > 0.55
+    assert sc["N90_5seed_summary"]["delta_R_min"] > 0.55
+    assert sc["N90_5seed_summary"]["delta_K_hyst_min"] >= 0.75
+    assert sc["N180_size_scaling"]["delta_R_jump"] > 0.55
+    assert sc["N180_size_scaling"]["delta_K_hyst"] > 2.50

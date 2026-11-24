@@ -200,13 +200,125 @@ def run_hysteresis_sweep(
     return np.array(R_fwd), np.array(R_bwd)
 
 
-def compute_landau_free_energy(k_val, r_grid, K_c, a0=2.0, b=6.0, c=5.5):
+def compute_landau_free_energy(k_val, r_grid, K_c=3.50, a0=1.00, b=9.00, c=10.125):
     """
-    U(1) gauge-invariant 6th-order subcritical Landau-Ginzburg effective potential:
+    Effective U(1) gauge-invariant 6th-order subcritical Landau-Ginzburg potential:
       F(R; K) = (1/2) * a0 * (K_c - K) * R^2 - (1/4) * b * R^4 + (1/6) * c * R^6
     Phase rotation invariance z -> z*exp(i*alpha) eliminates odd terms in R.
+    Calibrated spinodal endpoints:
+      - Hysteresis width Delta_K = b^2 / (4 * c * a0) = 2.000 (matching [1.50, 3.50])
+      - Synchronized minimum at K_c: R_sync(K_c) = sqrt(b / c) = sqrt(8/9) ~= 0.9428 <= 1
+      - Lower spinodal coherence at K_bwd = 1.50: R_sp = sqrt(b / (2*c)) = 2/3 ~= 0.6667.
     """
     return 0.5 * a0 * (K_c - k_val) * (r_grid**2) - 0.25 * b * (r_grid**4) + (1.0 / 6.0) * c * (r_grid**6)
+
+
+def run_fixed_k_coexistence_test(
+    A_intra, A_inter, module_indices, blanket_mask, omega,
+    K_test=2.50, dt=0.02, t_relax=60.0, t_measure=10.0, gamma=2.40, seed=7
+):
+    """
+    Directly test bistable coexistence at fixed K inside the hysteresis loop by
+    evolving disordered vs. phase-locked initial conditions over long relaxation times.
+    """
+    rng = np.random.default_rng(seed)
+    N = len(omega)
+    num_modules = len(np.unique(module_indices))
+    n_relax = int(t_relax / dt)
+    n_meas = int(t_measure / dt)
+
+    results = {}
+    for branch_name, init_theta in (
+        ("disordered_init", rng.uniform(-np.pi, np.pi, N)),
+        ("synchronized_init", rng.normal(0.0, 0.12, N)),
+    ):
+        theta = init_theta.copy()
+        r0 = float(compute_order_parameter(theta))
+        for _ in range(n_relax):
+            theta = rk4_step_gated(theta, omega, A_intra, A_inter, module_indices, blanket_mask, num_modules, K_test, N, gamma, dt)
+        r_samples = np.zeros(n_meas)
+        for step in range(n_meas):
+            theta = rk4_step_gated(theta, omega, A_intra, A_inter, module_indices, blanket_mask, num_modules, K_test, N, gamma, dt)
+            r_samples[step] = compute_order_parameter(theta)
+        results[branch_name] = {
+            "R_initial": r0,
+            "R_relaxed_mean": float(np.mean(r_samples)),
+            "R_relaxed_std": float(np.std(r_samples)),
+        }
+
+    r_low = results["disordered_init"]["R_relaxed_mean"]
+    r_high = results["synchronized_init"]["R_relaxed_mean"]
+    results["K_fixed"] = float(K_test)
+    results["t_relax"] = float(t_relax)
+    results["bistable_separation"] = float(r_high - r_low)
+    results["coexistence_confirmed"] = bool(r_high > 0.85 and r_low < 0.30 and (r_high - r_low) > 0.55)
+    return results
+
+
+def verify_ensemble_and_size_scaling(gamma=2.40, dt=0.02):
+    """
+    Evaluate hysteresis persistence across multiple frequency seeds (N=90) and
+    doubled system size (N=180) to confirm robustness beyond a single realization.
+    """
+    k_vals_coarse = np.linspace(0.2, 4.2, 21)
+    trapz_fn = getattr(np, "trapezoid", getattr(np, "trapz", None))
+
+    seed_metrics = []
+    for s in (42, 7, 13, 29, 77):
+        A_in, A_ex, mod_idx, blk_mask, om = generate_modular_topology(3, 30, 0.35, seed=s)
+        rf, rb = run_hysteresis_sweep(
+            A_in, A_ex, mod_idx, blk_mask, om,
+            k_vals_coarse, dt=dt, t_transient=28.0, t_measure=8.0, mode="gated", gamma=gamma, seed=s + 1
+        )
+        df = np.diff(rf)
+        db = np.diff(rb)
+        idx_f = int(np.argmax(df))
+        idx_b = int(np.argmax(db))
+        kf = float(k_vals_coarse[idx_f + 1])
+        kb = float(k_vals_coarse[idx_b + 1])
+        area = float(trapz_fn(np.maximum(0.0, rb - rf), k_vals_coarse))
+        seed_metrics.append({
+            "seed": s,
+            "delta_R_jump": float(df[idx_f]),
+            "Kc_fwd": kf,
+            "Kc_bwd": kb,
+            "delta_K_hyst": float(abs(kf - kb)),
+            "hysteresis_area": area,
+        })
+
+    # Doubled system size N=180 (3 modules x 60 nodes): incoherent R_B^joint ~ |B|^(-1/2)
+    # shifts unnormalized G=[R_B^joint]^gamma downward by 2^(-gamma/2) ~= 0.435x, raising K_c^fwd by ~2.3x.
+    k_vals_180 = np.linspace(0.2, 9.0, 23)
+    A_in_180, A_ex_180, mod_idx_180, blk_mask_180, om_180 = generate_modular_topology(3, 60, 0.35, seed=42)
+    rf_180, rb_180 = run_hysteresis_sweep(
+        A_in_180, A_ex_180, mod_idx_180, blk_mask_180, om_180,
+        k_vals_180, dt=dt, t_transient=28.0, t_measure=8.0, mode="gated", gamma=gamma, seed=7
+    )
+    df_180 = np.diff(rf_180)
+    db_180 = np.diff(rb_180)
+    kf_180 = float(k_vals_180[int(np.argmax(df_180)) + 1])
+    kb_180 = float(k_vals_180[int(np.argmax(db_180)) + 1])
+    area_180 = float(trapz_fn(np.maximum(0.0, rb_180 - rf_180), k_vals_180))
+
+    return {
+        "N90_5seed_summary": {
+            "seeds": [m["seed"] for m in seed_metrics],
+            "delta_R_mean": float(np.mean([m["delta_R_jump"] for m in seed_metrics])),
+            "delta_R_min": float(np.min([m["delta_R_jump"] for m in seed_metrics])),
+            "delta_K_hyst_mean": float(np.mean([m["delta_K_hyst"] for m in seed_metrics])),
+            "delta_K_hyst_min": float(np.min([m["delta_K_hyst"] for m in seed_metrics])),
+            "hysteresis_area_mean": float(np.mean([m["hysteresis_area"] for m in seed_metrics])),
+            "per_seed": seed_metrics,
+        },
+        "N180_size_scaling": {
+            "N": 180,
+            "delta_R_jump": float(np.max(df_180)),
+            "Kc_fwd": kf_180,
+            "Kc_bwd": kb_180,
+            "delta_K_hyst": float(abs(kf_180 - kb_180)),
+            "hysteresis_area": area_180,
+        },
+    }
 
 
 def compute_bic_model_selection(k_vals, r_fwd, r_bwd=None):

@@ -24,5 +24,95 @@
     "bic_2nd_order": -506.0118912507668,
     "delta_bic_evidence_for_1st_order": -153.30085363636158,
     "classification": "Second-Order Continuous Pitchfork Transition"
+  },
+  "calibrated_landau_spinodal": {
+    "a0": 1.0,
+    "b": 9.0,
+    "c": 10.125,
+    "delta_K_spinodal": 2.0,
+    "R_sync_at_Kc": 0.9428090415820634,
+    "R_spinodal_bwd": 0.6666666666666666
+  },
+  "fixed_k_coexistence": {
+    "disordered_init": {
+      "R_initial": 0.03297935173579217,
+      "R_relaxed_mean": 0.099168011645359,
+      "R_relaxed_std": 0.06292298239158481
+    },
+    "synchronized_init": {
+      "R_initial": 0.9942368037069822,
+      "R_relaxed_mean": 0.911755422770719,
+      "R_relaxed_std": 1.1207698637032464e-10
+    },
+    "K_fixed": 2.5,
+    "t_relax": 60.0,
+    "bistable_separation": 0.8125874111253599,
+    "coexistence_confirmed": true
+  },
+  "ensemble_and_size_scaling": {
+    "N90_5seed_summary": {
+      "seeds": [
+        42,
+        7,
+        13,
+        29,
+        77
+      ],
+      "delta_R_mean": 0.7648518652157306,
+      "delta_R_min": 0.5980409538489195,
+      "delta_K_hyst_mean": 1.3200000000000003,
+      "delta_K_hyst_min": 0.8000000000000003,
+      "hysteresis_area_mean": 0.9114906147676048,
+      "per_seed": [
+        {
+          "seed": 42,
+          "delta_R_jump": 0.874688080780452,
+          "Kc_fwd": 3.0000000000000004,
+          "Kc_bwd": 1.6,
+          "delta_K_hyst": 1.4000000000000004,
+          "hysteresis_area": 1.072361605300092
+        },
+        {
+          "seed": 7,
+          "delta_R_jump": 0.6595064156871501,
+          "Kc_fwd": 2.4000000000000004,
+          "Kc_bwd": 1.4000000000000001,
+          "delta_K_hyst": 1.0000000000000002,
+          "hysteresis_area": 0.6239109935781966
+        },
+        {
+          "seed": 13,
+          "delta_R_jump": 0.831712926996766,
+          "Kc_fwd": 4.0,
+          "Kc_bwd": 2.0,
+          "delta_K_hyst": 2.0,
+          "hysteresis_area": 1.3932951383062746
+        },
+        {
+          "seed": 29,
+          "delta_R_jump": 0.5980409538489195,
+          "Kc_fwd": 2.4000000000000004,
+          "Kc_bwd": 1.6,
+          "delta_K_hyst": 0.8000000000000003,
+          "hysteresis_area": 0.4108377914268806
+        },
+        {
+          "seed": 77,
+          "delta_R_jump": 0.8603109487653648,
+          "Kc_fwd": 3.4000000000000004,
+          "Kc_bwd": 2.0,
+          "delta_K_hyst": 1.4000000000000004,
+          "hysteresis_area": 1.0570475452265815
+        }
+      ]
+    },
+    "N180_size_scaling": {
+      "N": 180,
+      "delta_R_jump": 0.9094876330913005,
+      "Kc_fwd": 5.4,
+      "Kc_bwd": 1.8,
+      "delta_K_hyst": 3.6000000000000005,
+      "hysteresis_area": 2.9257252400686986
+    }
   }
 }

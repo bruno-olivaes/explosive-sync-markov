@@ -21,7 +21,9 @@ from src.explosive_kuramoto_engine import (
     generate_modular_topology,
     run_hysteresis_sweep,
     compute_landau_free_energy,
-    compute_bic_model_selection
+    compute_bic_model_selection,
+    run_fixed_k_coexistence_test,
+    verify_ensemble_and_size_scaling,
 )
 
 def main():
@@ -86,12 +88,25 @@ def main():
     print(f"      Gated Hysteresis Delta_K: {delta_K_hyst:.4f}, Area: {hysteresis_area:.4f}")
     print(f"      Standard Max Jump: {std_max_jump:.4f}, Area: {std_hyst_area:.4f}")
 
-    print("[4/5] Model Selection & Bayesian Information Criterion (BIC)...")
+    print("[4/5] Model Selection, Coexistence Test & Scaling Checks...")
     bic1_gated, bic2_gated, delta_bic_gated = compute_bic_model_selection(k_vals, r_fwd_gated, r_bwd_gated)
     bic1_std, bic2_std, delta_bic_std = compute_bic_model_selection(k_vals, r_fwd_std, r_bwd_std)
-    
+    coexistence = run_fixed_k_coexistence_test(
+        A_intra, A_inter, module_indices, blanket_mask, omega,
+        K_test=2.50, dt=0.02, t_relax=60.0, t_measure=10.0, gamma=2.40, seed=7
+    )
+    scaling = verify_ensemble_and_size_scaling(gamma=2.40, dt=0.02)
+
     print(f"      Gated: BIC_1st={bic1_gated:.2f}, BIC_2nd={bic2_gated:.2f}, Delta_BIC={delta_bic_gated:.2f}")
     print(f"      Standard: BIC_1st={bic1_std:.2f}, BIC_2nd={bic2_std:.2f}, Delta_BIC={delta_bic_std:.2f}")
+    print(f"      Fixed-K=2.50 Coexistence (t=60): R_low={coexistence['disordered_init']['R_relaxed_mean']:.4f}, R_high={coexistence['synchronized_init']['R_relaxed_mean']:.4f}")
+    print(f"      5-Seed Mean Delta_R={scaling['N90_5seed_summary']['delta_R_mean']:.4f}, N=180 Delta_R={scaling['N180_size_scaling']['delta_R_jump']:.4f}")
+
+    # Calibrated effective Landau parameters: Delta_K = b^2 / (4 * c * a0) = 2.00, R_sync(K_c) = sqrt(b/c) = sqrt(8/9)
+    a0_lg, b_lg, c_lg = 1.00, 9.00, 10.125
+    delta_k_spinodal = (b_lg ** 2) / (4.0 * c_lg * a0_lg)
+    r_sync_kc = float(np.sqrt(b_lg / c_lg))
+    r_sp_bwd = float(np.sqrt(b_lg / (2.0 * c_lg)))
 
     # Summary dictionary
     summary = {
@@ -120,7 +135,17 @@ def main():
             "bic_2nd_order": bic2_std,
             "delta_bic_evidence_for_1st_order": delta_bic_std,
             "classification": "Second-Order Continuous Pitchfork Transition"
-        }
+        },
+        "calibrated_landau_spinodal": {
+            "a0": a0_lg,
+            "b": b_lg,
+            "c": c_lg,
+            "delta_K_spinodal": float(delta_k_spinodal),
+            "R_sync_at_Kc": r_sync_kc,
+            "R_spinodal_bwd": r_sp_bwd,
+        },
+        "fixed_k_coexistence": coexistence,
+        "ensemble_and_size_scaling": scaling,
     }
     
     res_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results", "explosive_sync_summary.json"))
@@ -177,17 +202,17 @@ def main():
     colors = ["#4A5568", "#D69E2E", "#319795"]
 
     for k_s, lab, col in zip(k_samples, labels, colors):
-        f_vals = compute_landau_free_energy(k_s, r_grid, K_c=k_c_ref, a0=2.0, b=6.0, c=5.5)
+        f_vals = compute_landau_free_energy(k_s, r_grid, K_c=k_c_ref, a0=a0_lg, b=b_lg, c=c_lg)
         f_vals -= f_vals[0]  # normalize origin to 0
         ax_c.plot(r_grid, f_vals, label=lab, color=col, linewidth=2.0)
 
-    ax_c.set_title(r"(c) $U(1)$ 6th-Order Landau Potential $\mathcal{F}(R; K)$", fontsize=11, fontweight="bold")
+    ax_c.set_title(r"(c) Calibrated $U(1)$ 6th-Order Landau Potential $\mathcal{F}(R; K)$", fontsize=11, fontweight="bold")
     ax_c.set_xlabel("Order Parameter R", fontsize=10)
     ax_c.set_ylabel(r"Effective Potential $\Delta\mathcal{F}(R)$ [arb. units]", fontsize=10)
     ax_c.grid(True, linestyle=":", alpha=0.6)
     ax_c.legend(loc="lower left", frameon=True, fontsize=8.5)
-    ax_c.text(0.04, 0.24, r"$\mathcal{F}(R) = \frac{1}{2} a_0(K_c-K)R^2 - \frac{1}{4} b R^4 + \frac{1}{6} c R^6$" + "\n" + "Gauge-invariant sextic well stabilizes bistability",
-              transform=ax_c.transAxes, fontsize=8.2, bbox=dict(boxstyle="round,pad=0.4", fc="#F7FAFC", ec="#E2E8F0"))
+    ax_c.text(0.04, 0.24, r"$\mathcal{F}(R) = \frac{1}{2} a_0(K_c-K)R^2 - \frac{1}{4} b R^4 + \frac{1}{6} c R^6$" + "\n" + r"$\Delta K_{\mathrm{sp}} = b^2/(4ca_0) = 2.00,\; R_{\mathrm{sync}}(K_c) = \sqrt{8/9} \approx 0.943$",
+              transform=ax_c.transAxes, fontsize=8.0, bbox=dict(boxstyle="round,pad=0.4", fc="#F7FAFC", ec="#E2E8F0"))
 
     # Panel (d): Model Selection & Information Theory Evidence
     ax_d = axes[1, 1]
