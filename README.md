@@ -1,5 +1,6 @@
 # First-Order Explosive Synchronization via Markov-Blanket Boundary Gating
 
+[![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24485294.svg)](https://doi.org/10.5281/zenodo.24485294)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests: 6/6](https://img.shields.io/badge/pytest-6%2F6_passed-brightgreen.svg)]()
