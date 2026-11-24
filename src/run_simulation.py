@@ -24,6 +24,7 @@ from src.explosive_kuramoto_engine import (
     compute_bic_model_selection,
     run_fixed_k_coexistence_test,
     verify_ensemble_and_size_scaling,
+    run_factorial_ablation_and_scaling,
 )
 
 def main():
@@ -88,7 +89,7 @@ def main():
     print(f"      Gated Hysteresis Delta_K: {delta_K_hyst:.4f}, Area: {hysteresis_area:.4f}")
     print(f"      Standard Max Jump: {std_max_jump:.4f}, Area: {std_hyst_area:.4f}")
 
-    print("[4/5] Model Selection, Coexistence Test & Scaling Checks...")
+    print("[4/5] Model Selection, Coexistence, Scaling & 4-Regime Ablation...")
     bic1_gated, bic2_gated, delta_bic_gated = compute_bic_model_selection(k_vals, r_fwd_gated, r_bwd_gated)
     bic1_std, bic2_std, delta_bic_std = compute_bic_model_selection(k_vals, r_fwd_std, r_bwd_std)
     coexistence = run_fixed_k_coexistence_test(
@@ -96,11 +97,16 @@ def main():
         K_test=2.50, dt=0.02, t_relax=60.0, t_measure=10.0, gamma=2.40, seed=7
     )
     scaling = verify_ensemble_and_size_scaling(gamma=2.40, dt=0.02)
+    ablation = run_factorial_ablation_and_scaling(gamma=2.40, dt=0.02)
 
     print(f"      Gated: BIC_1st={bic1_gated:.2f}, BIC_2nd={bic2_gated:.2f}, Delta_BIC={delta_bic_gated:.2f}")
     print(f"      Standard: BIC_1st={bic1_std:.2f}, BIC_2nd={bic2_std:.2f}, Delta_BIC={delta_bic_std:.2f}")
     print(f"      Fixed-K=2.50 Coexistence (t=60): R_low={coexistence['disordered_init']['R_relaxed_mean']:.4f}, R_high={coexistence['synchronized_init']['R_relaxed_mean']:.4f}")
-    print(f"      5-Seed Mean Delta_R={scaling['N90_5seed_summary']['delta_R_mean']:.4f}, N=180 Delta_R={scaling['N180_size_scaling']['delta_R_jump']:.4f}")
+    for m_name, m_val in ablation["N90_5seed_ensemble"].items():
+        print(f"      Ablation [{m_name}]: R_area={m_val['global_area_mean']:.4f} | RB_area={m_val['blanket_area_mean']:.4f} | R_intra(K=2.5)={m_val['intra_at_K2p5_mean']:.4f}")
+    for m_name, s_val in ablation["multi_size_scaling_N90_to_N540"].items():
+        ks = {n: round(s_val["by_size"][str(n)]["Kc_fwd_mean"], 2) for n in (90, 180, 360, 540)}
+        print(f"      Size-Scaling [{m_name}]: Kc_fwd={ks} | slope alpha={s_val['empirical_exponent_Kc_vs_B']:.3f} (vs gamma/2={s_val['uncorrelated_heuristic_exponent_gamma_over_2']:.2f})")
 
     # Calibrated effective Landau parameters: Delta_K = b^2 / (4 * c * a0) = 2.00, R_sync(K_c) = sqrt(b/c) = sqrt(8/9)
     a0_lg, b_lg, c_lg = 1.00, 9.00, 10.125
@@ -146,6 +152,7 @@ def main():
         },
         "fixed_k_coexistence": coexistence,
         "ensemble_and_size_scaling": scaling,
+        "factorial_ablation_and_scaling": ablation,
     }
     
     res_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results", "explosive_sync_summary.json"))

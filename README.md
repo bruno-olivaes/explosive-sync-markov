@@ -3,7 +3,7 @@
 [![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24485294.svg)](https://doi.org/10.5281/zenodo.24485294)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests: 6/6](https://img.shields.io/badge/pytest-6%2F6_passed-brightgreen.svg)]()
+[![Tests: 7/7](https://img.shields.io/badge/pytest-7%2F7_passed-brightgreen.svg)]()
 [![ORCID](https://img.shields.io/badge/ORCID-0009--0003--5351--446X-green.svg)](https://orcid.org/0009-0003-5351-446X)
 
 This repository contains the official code, simulation pipeline, unit tests, and LaTeX manuscript for the paper:
@@ -41,7 +41,8 @@ This work isolates Active-Inference precision gating on an identical modular net
 | **Decisive Branch-Shape Separation ($\Delta\mathrm{BIC} > +10$)** | No (favors $\mathcal{M}_2$) | **Yes** (plus $K=2.50$ persistence over $t=60$) |
 | **Fixed-$K=2.50$ Finite-Horizon Persistence ($t=60$)** | — | **$R_{\mathrm{low}} = 0.0992$ vs. $R_{\mathrm{high}} = 0.9118$** |
 | **5-Seed Ensemble Mean Jump ($N=90$)** | — | **$\langle\Delta R\rangle = 0.7649$** ($\Delta K \in [0.80, 2.00]$) |
-| **Size Check ($N=180$, $K \in [0.2, 9.0]$)** | — | **$\Delta R = 0.9095$** ($K_c^{\mathrm{fwd}} = 5.40$, ratio $1.543$ vs. $3.50$; $K_c^{\mathrm{bwd}} = 1.80$) |
+| **Size Scaling ($N \in \{90, 180, 360, 540\}$)** | `inter_only` $\alpha = 0.132$ ($K_c^{\mathrm{fwd}} = 1.70\text{--}2.20$) | **`gated` $\alpha = 0.930$ ($3.03 \to 17.20$)**; `no_intra` $\alpha = 0.887$ |
+| **Inter-Only Gating Ablation ($N=90$, 5 seeds)** | `standard` $\mathcal{A}_{\mathrm{hyst}} = 0.0379$ | **`inter_only` $\mathcal{A}_{\mathrm{hyst}} = 0.1018$** ($7.47\times$ smaller than `gated` $0.7613$; persists!) |
 | **Calibrated Landau Potential ($a_0=1, b=9, c=10.125$)** | — | **$\Delta K_{\mathrm{sp}} = 2.00$**, **$R_{\mathrm{sync}}(K_c) = \sqrt{8/9} \approx 0.943$** |
 
 ---

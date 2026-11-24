@@ -16,8 +16,9 @@ from src.explosive_kuramoto_engine import (
     compute_blanket_order_params,
     rk4_step_standard,
     rk4_step_gated,
+    rk4_step_regime,
     compute_landau_free_energy,
-    compute_bic_model_selection
+    compute_bic_model_selection,
 )
 
 def test_topology_generation():
@@ -132,3 +133,24 @@ def test_end_to_end_explosive_hysteresis_and_bic():
     assert sc["N90_5seed_summary"]["delta_K_hyst_min"] >= 0.75
     assert sc["N180_size_scaling"]["delta_R_jump"] > 0.55
     assert sc["N180_size_scaling"]["delta_K_hyst"] > 2.50
+    ab = data["factorial_ablation_and_scaling"]
+    assert set(ab["N90_5seed_ensemble"].keys()) == {"standard", "inter_only_gated", "gated", "no_intra_gated"}
+    assert set(ab["multi_size_scaling_N90_to_N540"].keys()) == {"gated", "inter_only_gated", "no_intra_gated"}
+
+
+def test_fast_regime_rk4_matches_exact_o_n2():
+    """Verify O(N) mean-field RK4 step matches explicit O(N^2) modular step to machine precision."""
+    A_in, A_ex, mod_idx, blk_mask, om = generate_modular_topology(3, 15, 0.35, seed=19)
+    N = len(om)
+    rng = np.random.default_rng(123)
+    theta0 = rng.uniform(-np.pi, np.pi, N)
+    th_o2 = rk4_step_gated(theta0.copy(), om, A_in, A_ex, mod_idx, blk_mask, 3, 2.7, N, gamma=2.40, dt=0.02)
+    th_on = rk4_step_regime(theta0.copy(), om, mod_idx, blk_mask, 3, 2.7, N, 2.40, 0.55, True, True, dt=0.02)
+    assert np.allclose(th_o2, th_on, atol=1e-12)
+
+    th_std_o2 = rk4_step_standard(theta0.copy(), om, A_in, A_ex, blk_mask, 3, 2.7, N, dt=0.02)
+    th_std_on = rk4_step_regime(theta0.copy(), om, mod_idx, blk_mask, 3, 2.7, N, 2.40, 0.55, False, False, dt=0.02)
+    assert np.allclose(th_std_o2, th_std_on, atol=1e-12)
+
+    th_inter = rk4_step_regime(theta0.copy(), om, mod_idx, blk_mask, 3, 2.7, N, 2.40, 0.55, False, True, dt=0.02)
+    assert not np.any(np.isnan(th_inter)) and np.all(th_inter >= -np.pi) and np.all(th_inter <= np.pi)
