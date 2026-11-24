@@ -38,10 +38,10 @@ This work isolates Active-Inference precision gating on an identical modular net
 | **Hysteresis Width $\Delta K_{\text{hyst}}$** | $0.00$ | **$2.00$ (Bistable)** |
 | **Directional Hysteresis Area $|\oint R\,dK|$** | $0.0101$ | **$1.4932$** |
 | **$\Delta\mathrm{BIC}$ ($\mathcal{M}_2 - \mathcal{M}_1$)** | $-153.30$ | **$+267.53$** |
-| **Decisive Branch-Shape Separation ($\Delta\mathrm{BIC} > +10$)** | No (favors $\mathcal{M}_2$) | **Yes** (plus $K=2.50$ coexistence: $0.099$ vs $0.912$) |
-| **Fixed-$K=2.50$ Long-Time Coexistence ($t=60$)** | — | **$R_{\mathrm{low}} = 0.0992$ vs. $R_{\mathrm{high}} = 0.9118$** |
+| **Decisive Branch-Shape Separation ($\Delta\mathrm{BIC} > +10$)** | No (favors $\mathcal{M}_2$) | **Yes** (plus $K=2.50$ persistence over $t=60$) |
+| **Fixed-$K=2.50$ Finite-Horizon Persistence ($t=60$)** | — | **$R_{\mathrm{low}} = 0.0992$ vs. $R_{\mathrm{high}} = 0.9118$** |
 | **5-Seed Ensemble Mean Jump ($N=90$)** | — | **$\langle\Delta R\rangle = 0.7649$** ($\Delta K \in [0.80, 2.00]$) |
-| **Size Scaling ($N=180$, $K \in [0.2, 9.0]$)** | — | **$\Delta R = 0.9095$** ($K_c^{\mathrm{fwd}} = 5.40$, $K_c^{\mathrm{bwd}} = 1.80$) |
+| **Size Check ($N=180$, $K \in [0.2, 9.0]$)** | — | **$\Delta R = 0.9095$** ($K_c^{\mathrm{fwd}} = 5.40$, ratio $1.543$ vs. $3.50$; $K_c^{\mathrm{bwd}} = 1.80$) |
 | **Calibrated Landau Potential ($a_0=1, b=9, c=10.125$)** | — | **$\Delta K_{\mathrm{sp}} = 2.00$**, **$R_{\mathrm{sync}}(K_c) = \sqrt{8/9} \approx 0.943$** |
 
 ---
